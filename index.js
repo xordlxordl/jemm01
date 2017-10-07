@@ -1,29 +1,31 @@
 const express = require('express');
+const mongoose = require('mongoose');
+const cookieSession = require('cookie-session');
 const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const keys = require('./config/keys');
+
+// 몽고에 모델생성
+require('./models/Users');
+
+// 모델 
+require('./services/passport');
+
+
+mongoose.connect(keys.mongoURI);
+
 const app = express();
 
-passport.use(new GoogleStrategy(
-    {
-        clientID: keys.googleClientID,
-        clientSecret: keys.googleClientSecret,
-        callbackURL: '/auth/google/callback'
-    },  
-    (accessToken, refreshToken, profile, done) => {
-        console.log('access token:', accessToken);
-        console.log('refreshToken token:', refreshToken);
-        console.log('profile: ', profile);
-    }
-));
+app.use(
+    cookieSession( {
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in mils
+        keys: [keys.cookieKey]
+    })
+);
+app.use(passport.initialize());
+app.use(passport.session());
 
-app.get('/auth/google', passport.authenticate('google', {
-    scope: ['profile', 'email']
-}));
+require('./routes/routeAuth')(app);
 
-app.get('/auth/google/callback', passport.authenticate('google'));
-// 
-// 
 //app.get('/', (req,res)=> {
 //    res.send({hi:'there'});
 //});
