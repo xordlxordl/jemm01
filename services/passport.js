@@ -27,6 +27,7 @@ passport.use(new GoogleStrategy(
         callbackURL: '/auth/google/callback',
         proxy: true
     },  
+    /*
     (accessToken, refreshToken, profile, done) => {
         //console.log('access token:', accessToken);
         //console.log('refreshToken token:', refreshToken);
@@ -45,5 +46,22 @@ passport.use(new GoogleStrategy(
                 .then(user => done(null, user));
             }
         });
+    }*/
+    async (accessToken, refreshToken, profile, done) => {
+        //console.log('access token:', accessToken);
+        //console.log('refreshToken token:', refreshToken);
+        console.log('profile: ', profile);
+        const existingUser = await User.findOne({googleId: profile.id});
+        if(existingUser) {
+            console.log('exist: ', profile.id);
+            // we already have a record with the given prifile Id
+            return done(null, existingUser);
+        } 
+        
+        console.log('new one: ', profile.id);
+        // model instance
+        const user = await new User({googleId:profile.id}).save();
+        done(null, user);
+    
     }
 ));
